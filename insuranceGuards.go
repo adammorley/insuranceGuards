@@ -133,8 +133,7 @@ func (g *grid) locked(r room) bool {
 }
 
 // find all the rooms marked as guards in the distance map
-func (g *grid) findGuards() []room {
-	var guards []room = make([]room, 0)
+func (g *grid) findGuards() (guards []room) {
 	for r := 0; r < g.rMax; r++ {
 		for c := 0; c < g.cMax; c++ {
 			if g.guarded(room{r, c}) {
@@ -142,7 +141,7 @@ func (g *grid) findGuards() []room {
 			}
 		}
 	}
-	return guards
+	return
 }
 func (g *grid) String() string {
 	var sb strings.Builder
@@ -168,29 +167,24 @@ func (r room) proposeNeighbors() []room {
 }
 
 // returns the neighbors (adjacent rooms) of a room, iff in the grid and not locked or a guard
-func (g *grid) neighbors(r room) []room {
-	var n []room = make([]room, 0)
-	var c []room = r.proposeNeighbors()
-	for i := range c {
-		var cr room = c[i]
+func (g *grid) neighbors(r room) (n []room) {
+	for _, cr := range r.proposeNeighbors() {
 		if g.contains(cr) && !g.guarded(cr) && !g.locked(cr) {
 			n = append(n, cr)
 		}
 	}
-	return n
+	return
 }
 
 // for each guard, visit all the rooms and mark their distance.  track which rooms have been visited
 // for any given guard, to prevent multiple-visitation
 func (g *grid) visitRoomsViaGuards(guards []room) {
-	for gI := range guards {
-		guard := guards[gI]
-		neighbors := g.neighbors(guard)
+	for _, guard := range guards {
 		var toVisit *list.List = list.New() // using a linked list as a queue
-		for i := range neighbors {
-			toVisit.PushBack(neighbors[i])
+		for _, n := range g.neighbors(guard) {
+			toVisit.PushBack(n)
 		}
-		var visited map[room]bool = make(map[room]bool) // using a hashmap as a filter on the queue
+		visited := map[room]bool{} // using a hashmap as a filter on the queue
 		g.calcDistances(guard, toVisit, visited)
 	}
 }
@@ -199,16 +193,15 @@ func (g *grid) visitRoomsViaGuards(guards []room) {
 func (g *grid) calcDistances(guard room, toVisit *list.List, visited map[room]bool) {
 	e := toVisit.Front()
 	for e != nil {
-		var r room = e.Value.(room)
+		r := e.Value.(room)
 		if visited[r] {
 			e = e.Next()
 			continue
 		}
 		g.calcDistance(guard, r, visited)
-		neighbors := g.neighbors(r)
-		for i := range neighbors {
-			if !visited[neighbors[i]] {
-				toVisit.PushBack(neighbors[i])
+		for _, n := range g.neighbors(r) {
+			if !visited[n] {
+				toVisit.PushBack(n)
 			}
 		}
 		e = e.Next()
@@ -221,9 +214,7 @@ func (g *grid) calcDistance(guard room, r room, visited map[room]bool) {
 		g.dist[r.r][r.c] = 1
 	} else { // peek at the rooms neighbors and pick the lowest non-zero value
 		var low int = int(math.MaxInt32)
-		var neighbors []room = g.neighbors(r)
-		for i := range neighbors {
-			n := neighbors[i]
+		for _, n := range g.neighbors(r) {
 			if g.dist[n.r][n.c] > 0 && g.dist[n.r][n.c] < low {
 				low = g.dist[n.r][n.c]
 			}

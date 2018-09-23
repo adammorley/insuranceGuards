@@ -1,6 +1,9 @@
 package insuranceGuards
 
-import "testing"
+import (
+	"math/rand"
+	"testing"
+)
 
 const (
 	small  = 3
@@ -84,12 +87,39 @@ func TestLargeUnreachable(t *testing.T) {
 		g.problem(t, c)
 	}
 }
+func TestXLarge(t *testing.T) {
+	g := buildXlarge()
+	g.Fix()
+	g.Score()
+	t.Log(g)
+}
 
-func buildLarge() *grid {
-	g := NewGrid(large, large)
+func buildLarge() (g *grid) {
+	g = NewGrid(large, large)
 	g.PlaceGuards(room{3, 3}, room{2, 4}, room{1, 1}, room{6, 6})
 	g.LockRooms(room{1, 2}, room{4, 4}, room{2, 3})
-	return g
+	return
+}
+func buildXlarge() (g *grid) {
+	n := 20
+	g = NewGrid(xlarge, xlarge)
+	var i int
+	for i < n {
+		r := room{rand.Intn(xlarge), rand.Intn(xlarge)}
+		if !g.guarded(r) {
+			g.placeGuard(r)
+			i++
+		}
+	}
+	i = 0
+	for i < n {
+		r := room{rand.Intn(xlarge), rand.Intn(xlarge)}
+		if !g.guarded(r) && !g.locked(r) {
+			g.lockRoom(r)
+			i++
+		}
+	}
+	return
 }
 func (g *grid) validate(validDist [][]int) bool {
 	if g.rMax != len(validDist) {
