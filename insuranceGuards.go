@@ -29,6 +29,7 @@ const UNREACHABLE = 0
    basic functionality:
        create a grid (NewGrid)
        put some guards in (PlaceGuards)
+       maybe lock some rooms (LockRooms)
        fix the guard locations (Fix)
        score the grid (Score)
 */
@@ -218,7 +219,7 @@ func (g *grid) calcDistances(guard room, toVisit *list.List, visited map[room]bo
 func (g *grid) calcDistance(guard room, r room, visited map[room]bool) {
 	if abs(guard.r-r.r)+abs(guard.c-r.c) == 1 { //they are neighbors
 		g.dist[r.r][r.c] = 1
-	} else { // peek at the rooms neighbors and pick the lowest non-zero value > 0
+	} else { // peek at the rooms neighbors and pick the lowest non-zero value
 		var low int = int(math.MaxInt32)
 		var neighbors []room = g.neighbors(r)
 		for i := range neighbors {
